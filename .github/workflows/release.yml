@@ -53,11 +53,20 @@ jobs:
 
       - name: Resolve release tag
         id: tag
+        env:
+          INPUT_TAG: ${{ inputs.tag }}
+          REF_NAME: ${{ github.ref_name }}
         run: |
           if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
-            echo "ref_name=${{ inputs.tag }}" >> $GITHUB_OUTPUT
+            # Validate tag format to prevent injection
+            case "${INPUT_TAG}" in
+              v*) printf 'ref_name=%s
+' "${INPUT_TAG}" >> "$GITHUB_OUTPUT" ;;
+              *)  echo "Invalid tag format: must start with 'v'"; exit 1 ;;
+            esac
           else
-            echo "ref_name=${{ github.ref_name }}" >> $GITHUB_OUTPUT
+            printf 'ref_name=%s
+' "${REF_NAME}" >> "$GITHUB_OUTPUT"
           fi
 
       - name: Download built JAR

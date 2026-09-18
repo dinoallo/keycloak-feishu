@@ -15,9 +15,10 @@ import java.util.List;
  * Mapper that reads Feishu user_info fields and stores them as
  * Keycloak user attributes.
  *
- * <p>This mapper is automatically invoked for every Feishu IdP login.
- * It extracts the raw Feishu user info JSON (stored by
- * {@link com.keycloak.feishu.FeishuIdentityProvider}) and applies the
+ * <p>After an administrator adds this mapper to the Feishu IdP in the
+ * Keycloak Admin Console, it is invoked for every Feishu login and
+ * extracts the raw Feishu user info JSON (stored by
+ * {@link com.keycloak.feishu.FeishuIdentityProvider}) to apply the
  * user-configurable attribute mapping rules.</p>
  *
  * <h3>Default Mappings</h3>
@@ -47,7 +48,7 @@ public class FeishuUserAttributeMapper extends AbstractIdentityProviderMapper {
     private static final String PROVIDER_NAME = "Feishu User Attribute Mapper";
     private static final String HELPER_TEXT =
             "Maps Feishu user_info fields to Keycloak user attributes. " +
-            "The mapper prefix \"feishu_\" is added automatically.";
+            "The mapper prefix defaults to \"feishu_\" but can be customized.";
 
     private static final String PROP_FEISHU_USER_INFO = "feishuUserInfo";
 

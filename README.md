@@ -146,7 +146,7 @@ User → Keycloak Login → clicks "Feishu"
        ↓
 GET <auth-endpoint>?app_id=...&redirect_uri=...&response_type=code&scope=user_info
        ↓ (user authorizes)
-POST <token-endpoint>  {app_id, app_secret, grant_type, code}
+POST <token-endpoint>  {client_id, client_secret, grant_type, code, redirect_uri}
        ↓
 GET  <user-info-endpoint>  Bearer: access_token
        ↓
@@ -162,7 +162,7 @@ Key differences from a standard OIDC IdP:
 | Aspect | Standard OIDC | Feishu |
 |--------|--------------|--------|
 | Auth param | `client_id` | `app_id` |
-| Token auth | Basic Auth / POST body | JSON body with `app_id` + `app_secret` |
+| Token auth | Basic Auth / POST body | JSON body with `client_id` + `client_secret` + `redirect_uri` |
 | Token response | `access_token` at root | `{"code":0,"data":{"access_token":"..."}}` |
 | User info envelope | flat JSON | `{"code":0,"data":{...},"msg":"ok"}` |
 

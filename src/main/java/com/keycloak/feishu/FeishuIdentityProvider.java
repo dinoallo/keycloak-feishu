@@ -155,7 +155,12 @@ public class FeishuIdentityProvider extends AbstractOAuth2IdentityProvider<Feish
         }
 
         // Exchange the authorization code for an access token via Feishu's JSON API
-        String accessToken = exchangeCodeForAccessToken(code);
+        String redirectUri = getConfig().getAlias() != null
+                ? session.getContext().getUri().getBaseUri()
+                    + "realms/" + realm.getName()
+                    + "/broker/" + getConfig().getAlias() + "/endpoint"
+                : null;
+        String accessToken = exchangeCodeForAccessToken(code, redirectUri);
         if (accessToken == null) {
             logger.error("Failed to obtain access token from Feishu");
             return callback.error("Failed to obtain access token");
@@ -209,21 +214,22 @@ public class FeishuIdentityProvider extends AbstractOAuth2IdentityProvider<Feish
 
     /**
      * Exchange the authorization code for an access token via Feishu's
-     * OAuth2 token endpoint.
+     * OAuth2 token endpoint (v3).
      *
-     * Feishu expects a JSON POST body with app_id, app_secret, grant_type,
-     * and code.  The response is wrapped in a {@code {code, msg, data}}
-     * envelope.
+     * Feishu expects a JSON POST body with client_id, client_secret,
+     * grant_type, code, and redirect_uri. The response is wrapped in a
+     * {@code {code, msg, data}} envelope.
      */
-    private String exchangeCodeForAccessToken(String code) {
+    private String exchangeCodeForAccessToken(String code, String redirectUri) {
         FeishuIdentityProviderConfig config = getConfig();
 
         try {
             Map<String, String> params = new HashMap<>();
-            params.put("app_id", config.getFeishuAppId());
-            params.put("app_secret", config.getFeishuAppSecret());
+            params.put("client_id", config.getFeishuAppId());
+            params.put("client_secret", config.getFeishuAppSecret());
             params.put("grant_type", "authorization_code");
             params.put("code", code);
+            params.put("redirect_uri", redirectUri);
 
             SimpleHttp http = SimpleHttp.doPost(config.getFeishuTokenUrl(), session)
                     .json(params);

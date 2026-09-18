@@ -119,7 +119,7 @@ public class FeishuIdentityProviderConfig extends OAuth2IdentityProviderConfig {
      */
     public String getDefaultScope() {
         return isUserIdFeatureEnabled()
-                ? "user_info,contact:user.employee_id:readall"
+                ? "user_info contact:user.employee_id:readall"
                 : "user_info";
     }
 }
