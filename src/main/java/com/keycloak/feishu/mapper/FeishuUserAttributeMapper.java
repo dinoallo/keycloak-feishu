@@ -4,15 +4,12 @@ import com.fasterxml.jackson.databind.JsonNode;
 
 import org.keycloak.broker.provider.AbstractIdentityProviderMapper;
 import org.keycloak.broker.provider.BrokeredIdentityContext;
-import org.keycloak.broker.provider.ConfigConstants;
 import org.keycloak.broker.provider.IdentityBrokerException;
 import org.keycloak.models.*;
 import org.keycloak.provider.ProviderConfigProperty;
 import org.keycloak.provider.ProviderConfigurationBuilder;
 
-import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 
 /**
  * Mapper that reads Feishu user_info fields and stores them as
@@ -55,11 +52,15 @@ public class FeishuUserAttributeMapper extends AbstractIdentityProviderMapper {
     private static final String PROP_FEISHU_USER_INFO = "feishuUserInfo";
 
     // ---- Config property keys ----
+    // Note: ConfigConstants.MAP_ATTRIBUTES was removed in Keycloak 25.
+    // We define our own config key instead.
 
     private static final String CONF_ATTRIBUTE_PREFIX = "attribute.prefix";
     private static final String CONF_ATTRIBUTE_PREFIX_DEFAULT = "feishu_";
 
-    private static final String CONF_FIELDS = "fields";
+    private static final String CONF_ENABLED = "map.attributes.enabled";
+
+    private static final String[] COMPATIBLE_PROVIDERS = {"feishu"};
 
     // ========================================================================
     // IdentityProviderMapper SPI
@@ -68,6 +69,11 @@ public class FeishuUserAttributeMapper extends AbstractIdentityProviderMapper {
     @Override
     public String getId() {
         return PROVIDER_ID;
+    }
+
+    @Override
+    public String[] getCompatibleProviders() {
+        return COMPATIBLE_PROVIDERS;
     }
 
     @Override
@@ -97,7 +103,7 @@ public class FeishuUserAttributeMapper extends AbstractIdentityProviderMapper {
                 .defaultValue(CONF_ATTRIBUTE_PREFIX_DEFAULT)
                 .add()
                 .property()
-                .name(ConfigConstants.MAP_ATTRIBUTES)
+                .name(CONF_ENABLED)
                 .label("Map attributes from Feishu user info")
                 .helpText("If enabled, all available Feishu fields are " +
                         "mapped as user attributes. If disabled, no " +
@@ -110,42 +116,52 @@ public class FeishuUserAttributeMapper extends AbstractIdentityProviderMapper {
 
     // ========================================================================
     // Mapping logic
+    //
+    // In Keycloak 25, all mapper methods include an
+    // IdentityProviderMapperModel parameter.  Use it to access the
+    // mapper's configuration instead of BrokeredIdentityContext.getMapperConfig().
     // ========================================================================
 
     @Override
     public void importNewUser(KeycloakSession session, RealmModel realm,
-                              UserModel user, BrokeredIdentityContext context) {
-        applyMapping(user, context);
+                              UserModel user, IdentityProviderMapperModel mapperModel,
+                              BrokeredIdentityContext context) {
+        applyMapping(user, mapperModel, context);
     }
 
     @Override
     public void updateBrokeredUser(KeycloakSession session, RealmModel realm,
-                                   UserModel user, BrokeredIdentityContext context) {
-        applyMapping(user, context);
+                                   UserModel user, IdentityProviderMapperModel mapperModel,
+                                   BrokeredIdentityContext context) {
+        applyMapping(user, mapperModel, context);
     }
 
     @Override
-    public Object updateBrokeredUserLegacy(KeycloakSession session, RealmModel realm,
-                                           UserModel user, BrokeredIdentityContext context) {
-        applyMapping(user, context);
-        return null;
+    public void updateBrokeredUserLegacy(KeycloakSession session, RealmModel realm,
+                                         UserModel user, IdentityProviderMapperModel mapperModel,
+                                         BrokeredIdentityContext context) {
+        applyMapping(user, mapperModel, context);
     }
 
     /**
      * Apply the Feishu attribute mapping to the Keycloak user.
      */
-    private void applyMapping(UserModel user, BrokeredIdentityContext context) {
+    private void applyMapping(UserModel user, IdentityProviderMapperModel mapperModel,
+                              BrokeredIdentityContext context) {
         // Retrieve the raw Feishu user info JSON stored by the provider
-        JsonNode userInfo = (JsonNode) context.getContext().get(PROP_FEISHU_USER_INFO);
+        // Use getContextData() instead of getContext() (removed in Keycloak 25)
+        JsonNode userInfo = (JsonNode) context.getContextData().get(PROP_FEISHU_USER_INFO);
         if (userInfo == null) {
             return;
         }
 
-        String prefix = Optional.ofNullable(context.getMapperConfig())
-                .map(cfg -> cfg.getConfig().get(CONF_ATTRIBUTE_PREFIX))
-                .orElse(CONF_ATTRIBUTE_PREFIX_DEFAULT);
+        String prefix = mapperModel.getConfig() != null
+                ? mapperModel.getConfig().getOrDefault(CONF_ATTRIBUTE_PREFIX,
+                        CONF_ATTRIBUTE_PREFIX_DEFAULT)
+                : CONF_ATTRIBUTE_PREFIX_DEFAULT;
 
-        boolean mapAttributes = parseBooleanConfig(context, ConfigConstants.MAP_ATTRIBUTES, true);
+        boolean mapAttributes = parseBooleanConfig(
+                mapperModel, CONF_ENABLED, true);
         if (!mapAttributes) {
             return;
         }
@@ -171,13 +187,12 @@ public class FeishuUserAttributeMapper extends AbstractIdentityProviderMapper {
     // Helpers
     // ========================================================================
 
-    private static boolean parseBooleanConfig(BrokeredIdentityContext context,
+    private static boolean parseBooleanConfig(IdentityProviderMapperModel mapperModel,
                                                String key, boolean defaultValue) {
-        if (context.getMapperConfig() == null
-                || context.getMapperConfig().getConfig() == null) {
+        if (mapperModel == null || mapperModel.getConfig() == null) {
             return defaultValue;
         }
-        String val = context.getMapperConfig().getConfig().get(key);
+        String val = mapperModel.getConfig().get(key);
         return val != null ? Boolean.parseBoolean(val) : defaultValue;
     }
 

@@ -18,20 +18,20 @@ import java.util.List;
  * under Identity Providers.
  */
 public class FeishuIdentityProviderFactory
-        extends AbstractIdentityProviderFactory<FeishuIdentityProvider, FeishuIdentityProviderConfig>
-        implements SocialIdentityProviderFactory<FeishuIdentityProvider, FeishuIdentityProviderConfig> {
+        extends AbstractIdentityProviderFactory<FeishuIdentityProvider>
+        implements SocialIdentityProviderFactory<FeishuIdentityProvider> {
 
     public static final String PROVIDER_ID = "feishu";
     public static final String PROVIDER_NAME = "Feishu (Lark)";
 
     // ---- Config property names (must match FeishuIdentityProviderConfig keys) ----
 
-    private static final String CONFIG_APP_ID = "feishuAppId";
-    private static final String CONFIG_APP_SECRET = "feishuAppSecret";
-    private static final String CONFIG_AUTH_URL = "feishuAuthUrl";
-    private static final String CONFIG_TOKEN_URL = "feishuTokenUrl";
-    private static final String CONFIG_USER_INFO_URL = "feishuUserInfoUrl";
-    private static final String CONFIG_USER_ID = "feishuUserIdFeature";
+    static final String CONFIG_APP_ID = "feishuAppId";
+    static final String CONFIG_APP_SECRET = "feishuAppSecret";
+    static final String CONFIG_AUTH_URL = "feishuAuthUrl";
+    static final String CONFIG_TOKEN_URL = "feishuTokenUrl";
+    static final String CONFIG_USER_INFO_URL = "feishuUserInfoUrl";
+    static final String CONFIG_USER_ID = "feishuUserIdFeature";
 
     private static final String DEFAULT_AUTH_URL =
             "https://accounts.feishu.cn/open-apis/authen/v1/authorize";
@@ -55,18 +55,14 @@ public class FeishuIdentityProviderFactory
     }
 
     @Override
-    public FeishuIdentityProvider create(KeycloakSession session, FeishuIdentityProviderConfig config) {
+    public FeishuIdentityProvider create(KeycloakSession session, IdentityProviderModel model) {
+        FeishuIdentityProviderConfig config = new FeishuIdentityProviderConfig(model);
         return new FeishuIdentityProvider(session, config);
     }
 
     @Override
     public FeishuIdentityProviderConfig createConfig() {
         return new FeishuIdentityProviderConfig();
-    }
-
-    @Override
-    public FeishuIdentityProviderConfig createConfig(IdentityProviderModel model) {
-        return new FeishuIdentityProviderConfig(model);
     }
 
     @Override
