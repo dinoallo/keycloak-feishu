@@ -251,7 +251,7 @@ public class FeishuIdentityProvider extends AbstractOAuth2IdentityProvider<Feish
                 return root.get("access_token").asText();
             }
 
-            logger.errorf("Feishu token response missing access_token: %s", response);
+            logger.error("Feishu token response missing access_token");
             throw new IdentityBrokerException("Feishu token response missing access_token");
         } catch (IdentityBrokerException e) {
             throw e;
@@ -292,7 +292,7 @@ public class FeishuIdentityProvider extends AbstractOAuth2IdentityProvider<Feish
                 .header("Content-Type", "application/json; charset=utf-8");
 
         String response = http.asString();
-        logger.debugf("Feishu user_info response: %s", response);
+        logger.debug("Feishu user_info response received (body omitted for security)");
 
         JsonNode root = mapper.readTree(response);
 
@@ -341,7 +341,7 @@ public class FeishuIdentityProvider extends AbstractOAuth2IdentityProvider<Feish
         String enName = getField(userInfo, FLD_EN_NAME);
         String email = getField(userInfo, FLD_EMAIL);
 
-        identity.setUsername(name != null ? name : enName);
+        identity.setUsername(brokerUserId);
         identity.setFirstName(name);
         // Use en_name as lastName if available; otherwise fall back to name
         identity.setLastName(enName != null ? enName : name);
@@ -352,10 +352,8 @@ public class FeishuIdentityProvider extends AbstractOAuth2IdentityProvider<Feish
         }
 
         // ---- Store raw JSON for attribute mappers ----
+        // Store raw JSON for the attribute mapper to process
         identity.getContextData().put(PROP_FEISHU_USER_INFO, userInfo);
-
-        // ---- Extract all Feishu fields as Keycloak user attributes ----
-        mapUserInfoToAttributes(identity, userInfo);
 
         return identity;
     }
@@ -363,26 +361,6 @@ public class FeishuIdentityProvider extends AbstractOAuth2IdentityProvider<Feish
     // ========================================================================
     // Internal helpers
     // ========================================================================
-
-    /**
-     * Parse all known fields from the Feishu user_info response and set them
-     * as Keycloak user attributes on the identity context.
-     */
-    private void mapUserInfoToAttributes(BrokeredIdentityContext identity, JsonNode userInfo) {
-        String[] fields = {
-                FLD_SUB, FLD_NAME, FLD_EN_NAME, FLD_NICKNAME,
-                FLD_EMAIL, FLD_MOBILE, FLD_OPEN_ID, FLD_UNION_ID,
-                FLD_TENANT_KEY, FLD_AVATAR_URL, FLD_AVATAR_THUMB,
-                FLD_AVATAR_MIDDLE, FLD_AVATAR_BIG, FLD_USER_ID
-        };
-
-        for (String field : fields) {
-            String value = getField(userInfo, field);
-            if (value != null && !value.isBlank()) {
-                identity.setUserAttribute(field, value);
-            }
-        }
-    }
 
     /**
      * Pick the best avatar URL: big > middle > thumb > url.

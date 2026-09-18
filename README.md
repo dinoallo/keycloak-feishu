@@ -75,8 +75,10 @@ The output JAR is `target/keycloak-feishu.jar`.
 5. Set the **Redirect URI** to match what you configured on the Feishu Open Platform.
 6. Save.
 
-> **Tip**: For international (Larksuite) tenants, change the three endpoint URLs
-> from `open.feishu.cn` to `open.larksuite.com`.
+> **Tip**: For international (Larksuite) tenants, replace the three endpoint URLs
+> with the Larksuite equivalents below. Note that the default authorize and token
+> endpoints use `accounts.feishu.cn`, while the user_info endpoint uses
+> `open.feishu.cn` — use the table in the next section to set all three correctly.
 
 ### 3. Optional: Add the Attribute Mapper
 

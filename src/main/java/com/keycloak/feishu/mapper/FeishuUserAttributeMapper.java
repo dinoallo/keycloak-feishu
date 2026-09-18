@@ -200,6 +200,11 @@ public class FeishuUserAttributeMapper extends AbstractIdentityProviderMapper {
         if (node == null || !node.has(field) || node.get(field).isNull()) {
             return null;
         }
-        return node.get(field).asText();
+        String value = node.get(field).asText();
+        // Treat blank strings as absent (matches the provider's getField behavior)
+        if (value.isBlank()) {
+            return null;
+        }
+        return value;
     }
 }
