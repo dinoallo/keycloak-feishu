@@ -82,8 +82,7 @@ public class FeishuIdentityProvider extends AbstractOAuth2IdentityProvider<Feish
      * Build the authorization URL with Feishu-specific parameters.
      *
      * Feishu uses the standard OAuth2 {@code client_id} as the
-     * application identifier parameter.  We also pass the configured
-     * default scope.
+     * application identifier parameter.
      */
     @Override
     protected UriBuilder createAuthorizationUrl(AuthenticationRequest request) {
@@ -93,8 +92,7 @@ public class FeishuIdentityProvider extends AbstractOAuth2IdentityProvider<Feish
         UriBuilder uriBuilder = UriBuilder.fromUri(authUrl)
                 .queryParam("client_id", config.getClientId())
                 .queryParam("redirect_uri", request.getRedirectUri())
-                .queryParam("response_type", "code")
-                .queryParam("scope", config.getDefaultScope());
+                .queryParam("response_type", "code");
 
         // Add state from the authentication request
         if (request.getState() != null) {
