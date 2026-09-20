@@ -43,6 +43,13 @@ public class FeishuIdentityProviderConfig extends OAuth2IdentityProviderConfig {
     // Each URL defaults to the standard Feishu Open Platform endpoint.
     // Users can override these to point to a different base domain
     // (e.g., larksuite.com for international tenants) or a custom proxy.
+    //
+    // NOTE: We also override the standard OAuth2IdentityProviderConfig URL
+    // getters (getTokenUrl, getAuthorizationUrl, getUserInfoUrl) so the
+    // parent class's built-in OAuth2 callback flow uses the correct Feishu
+    // endpoints. Without these overrides, the parent's Endpoint.authResponse()
+    // would call getConfig().getTokenUrl() and receive null because the
+    // standard "tokenUrl" config key is never set.
     // ========================================================================
 
     public String getFeishuAuthUrl() {
@@ -53,6 +60,11 @@ public class FeishuIdentityProviderConfig extends OAuth2IdentityProviderConfig {
         getConfig().put(AUTH_URL_KEY, url);
     }
 
+    @Override
+    public String getAuthorizationUrl() {
+        return getFeishuAuthUrl();
+    }
+
     public String getFeishuTokenUrl() {
         return getConfig().getOrDefault(TOKEN_URL_KEY, DEFAULT_TOKEN_URL);
     }
@@ -61,12 +73,22 @@ public class FeishuIdentityProviderConfig extends OAuth2IdentityProviderConfig {
         getConfig().put(TOKEN_URL_KEY, url);
     }
 
+    @Override
+    public String getTokenUrl() {
+        return getFeishuTokenUrl();
+    }
+
     public String getFeishuUserInfoUrl() {
         return getConfig().getOrDefault(USER_INFO_URL_KEY, DEFAULT_USER_INFO_URL);
     }
 
     public void setFeishuUserInfoUrl(String url) {
         getConfig().put(USER_INFO_URL_KEY, url);
+    }
+
+    @Override
+    public String getUserInfoUrl() {
+        return getFeishuUserInfoUrl();
     }
 
     // ========================================================================
@@ -93,6 +115,7 @@ public class FeishuIdentityProviderConfig extends OAuth2IdentityProviderConfig {
      *   <li>{@code contact:user.employee_id:readall} – optional, enables user_id binding</li>
      * </ul>
      */
+    @Override
     public String getDefaultScope() {
         return isUserIdFeatureEnabled()
                 ? "user_info contact:user.employee_id:readall"
