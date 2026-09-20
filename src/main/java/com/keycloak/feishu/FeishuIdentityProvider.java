@@ -91,7 +91,7 @@ public class FeishuIdentityProvider extends AbstractOAuth2IdentityProvider<Feish
         String authUrl = config.getFeishuAuthUrl();
 
         UriBuilder uriBuilder = UriBuilder.fromUri(authUrl)
-                .queryParam("app_id", config.getFeishuAppId())
+                .queryParam("client_id", config.getFeishuAppId())
                 .queryParam("redirect_uri", request.getRedirectUri())
                 .queryParam("response_type", "code")
                 .queryParam("scope", config.getDefaultScope());
@@ -235,9 +235,13 @@ public class FeishuIdentityProvider extends AbstractOAuth2IdentityProvider<Feish
                     .json(params);
 
             String response = http.asString();
-            logger.debugf("Feishu token response: %s", response);
-
             JsonNode root = mapper.readTree(response);
+
+            if (logger.isDebugEnabled()) {
+                int apiCode = root.has("code") ? root.get("code").asInt() : -1;
+                String apiMsg = root.has("msg") ? root.get("msg").asText() : "N/A";
+                logger.debugf("Feishu token API: code=%d, msg=%s", apiCode, apiMsg);
+            }
 
             // Check for Feishu API-level error
             if (root.has("code") && root.get("code").asInt() != 0) {
