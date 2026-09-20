@@ -177,9 +177,11 @@ public class FeishuUserAttributeMapper extends AbstractIdentityProviderMapper {
 
         for (String field : fields) {
             String value = getField(userInfo, field);
+            String attributeName = prefix + field;
             if (value != null) {
-                String attributeName = prefix + field;
                 user.setSingleAttribute(attributeName, value);
+            } else {
+                user.removeAttribute(attributeName);
             }
         }
     }
