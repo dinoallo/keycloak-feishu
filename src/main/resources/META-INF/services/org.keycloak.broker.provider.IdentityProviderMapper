@@ -1,0 +1,2 @@
+# Keycloak SPI registration for the Feishu User Attribute Mapper
+com.keycloak.feishu.mapper.FeishuUserAttributeMapper

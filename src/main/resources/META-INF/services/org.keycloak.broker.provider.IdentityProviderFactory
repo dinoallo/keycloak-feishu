@@ -1,0 +1,2 @@
+# Keycloak SPI registration for the Feishu Identity Provider
+com.keycloak.feishu.FeishuIdentityProviderFactory
