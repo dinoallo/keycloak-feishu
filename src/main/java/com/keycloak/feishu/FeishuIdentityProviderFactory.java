@@ -16,6 +16,10 @@ import java.util.List;
  * {@code META-INF/services/org.keycloak.broker.provider.IdentityProviderFactory}
  * and makes the "feishu" provider available in the Keycloak admin console
  * under Identity Providers.
+ *
+ * <p>Credentials (App ID / App Secret) use the standard Keycloak
+ * Client ID / Client Secret fields inherited from
+ * {@link org.keycloak.broker.oidc.OAuth2IdentityProviderFactory}.
  */
 public class FeishuIdentityProviderFactory
         extends AbstractIdentityProviderFactory<FeishuIdentityProvider>
@@ -26,8 +30,6 @@ public class FeishuIdentityProviderFactory
 
     // ---- Config property names (must match FeishuIdentityProviderConfig keys) ----
 
-    static final String CONFIG_APP_ID = "feishuAppId";
-    static final String CONFIG_APP_SECRET = "feishuAppSecret";
     static final String CONFIG_AUTH_URL = "feishuAuthUrl";
     static final String CONFIG_TOKEN_URL = "feishuTokenUrl";
     static final String CONFIG_USER_INFO_URL = "feishuUserInfoUrl";
@@ -68,26 +70,6 @@ public class FeishuIdentityProviderFactory
     @Override
     public List<ProviderConfigProperty> getConfigProperties() {
         return ProviderConfigurationBuilder.create()
-
-                // ---- Credentials ----
-
-                .property()
-                .name(CONFIG_APP_ID)
-                .label("Feishu App ID")
-                .helpText("The App ID of your Feishu application. " +
-                        "Find this on the Feishu Open Platform console " +
-                        "(https://open.feishu.cn/app) under Credentials.")
-                .type(ProviderConfigProperty.STRING_TYPE)
-                .add()
-
-                .property()
-                .name(CONFIG_APP_SECRET)
-                .label("Feishu App Secret")
-                .helpText("The App Secret of your Feishu application. " +
-                        "Keep this value confidential.")
-                .type(ProviderConfigProperty.PASSWORD)
-                .secret(true)
-                .add()
 
                 // ---- Endpoint URLs ----
 

@@ -7,13 +7,13 @@ import org.keycloak.models.KeycloakSession;
 /**
  * Configuration model for Feishu Identity Provider.
  *
- * Stores Feishu-specific settings such as app_id, app_secret,
- * endpoint URLs, and optional features like user ID binding mode.
+ * Stores Feishu-specific settings such as endpoint URLs,
+ * and optional features like user ID binding mode.
+ * Credentials (App ID / App Secret) use the standard
+ * {@link #getClientId()} / {@link #getClientSecret()} from the parent class.
  */
 public class FeishuIdentityProviderConfig extends OAuth2IdentityProviderConfig {
 
-    private static final String APP_ID_CONFIG_KEY = "feishuAppId";
-    private static final String APP_SECRET_CONFIG_KEY = "feishuAppSecret";
     private static final String USER_ID_FEATURE_KEY = "feishuUserIdFeature";
 
     // ---- Configurable endpoint URLs ----
@@ -35,30 +35,6 @@ public class FeishuIdentityProviderConfig extends OAuth2IdentityProviderConfig {
 
     public FeishuIdentityProviderConfig() {
         super();
-    }
-
-    // ========================================================================
-    // Feishu App ID
-    // ========================================================================
-
-    public String getFeishuAppId() {
-        return getConfig().get(APP_ID_CONFIG_KEY);
-    }
-
-    public void setFeishuAppId(String appId) {
-        getConfig().put(APP_ID_CONFIG_KEY, appId);
-    }
-
-    // ========================================================================
-    // Feishu App Secret
-    // ========================================================================
-
-    public String getFeishuAppSecret() {
-        return getConfig().get(APP_SECRET_CONFIG_KEY);
-    }
-
-    public void setFeishuAppSecret(String appSecret) {
-        getConfig().put(APP_SECRET_CONFIG_KEY, appSecret);
     }
 
     // ========================================================================

@@ -91,7 +91,7 @@ public class FeishuIdentityProvider extends AbstractOAuth2IdentityProvider<Feish
         String authUrl = config.getFeishuAuthUrl();
 
         UriBuilder uriBuilder = UriBuilder.fromUri(authUrl)
-                .queryParam("client_id", config.getFeishuAppId())
+                .queryParam("client_id", config.getClientId())
                 .queryParam("redirect_uri", request.getRedirectUri())
                 .queryParam("response_type", "code")
                 .queryParam("scope", config.getDefaultScope());
@@ -225,8 +225,8 @@ public class FeishuIdentityProvider extends AbstractOAuth2IdentityProvider<Feish
 
         try {
             Map<String, String> params = new HashMap<>();
-            params.put("client_id", config.getFeishuAppId());
-            params.put("client_secret", config.getFeishuAppSecret());
+            params.put("client_id", config.getClientId());
+            params.put("client_secret", config.getClientSecret());
             params.put("grant_type", "authorization_code");
             params.put("code", code);
             params.put("redirect_uri", redirectUri);
