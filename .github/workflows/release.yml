@@ -60,13 +60,11 @@ jobs:
           if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
             # Validate tag format to prevent injection
             case "${INPUT_TAG}" in
-              v*) printf 'ref_name=%s
-' "${INPUT_TAG}" >> "$GITHUB_OUTPUT" ;;
+              v*) printf 'ref_name=%s\n' "${INPUT_TAG}" >> "$GITHUB_OUTPUT" ;;
               *)  echo "Invalid tag format: must start with 'v'"; exit 1 ;;
             esac
           else
-            printf 'ref_name=%s
-' "${REF_NAME}" >> "$GITHUB_OUTPUT"
+            printf 'ref_name=%s\n' "${REF_NAME}" >> "$GITHUB_OUTPUT"
           fi
 
       - name: Download built JAR
