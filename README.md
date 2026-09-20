@@ -65,8 +65,8 @@ The output JAR is `target/keycloak-feishu.jar`.
 
 | Field | Description | Default |
 |-------|-------------|---------|
-| **Feishu App ID** | Your Feishu application App ID | — |
-| **Feishu App Secret** | Your Feishu application App Secret | — |
+| **Client ID** | Your Feishu application App ID (client_id) | — |
+| **Client Secret** | Your Feishu application App Secret (client_secret) | — |
 | **Authorization endpoint URL** | OAuth2 authorization endpoint | `https://accounts.feishu.cn/open-apis/authen/v1/authorize` |
 | **Token endpoint URL** | OAuth2 token exchange endpoint | `https://accounts.feishu.cn/oauth/v3/token` |
 | **User info endpoint URL** | User info API endpoint | `https://open.feishu.cn/open-apis/authen/v1/user_info` |

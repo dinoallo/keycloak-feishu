@@ -81,7 +81,7 @@ public class FeishuIdentityProvider extends AbstractOAuth2IdentityProvider<Feish
     /**
      * Build the authorization URL with Feishu-specific parameters.
      *
-     * Feishu requires {@code app_id} (not {@code client_id}) as the
+     * Feishu uses the standard OAuth2 {@code client_id} as the
      * application identifier parameter.  We also pass the configured
      * default scope.
      */
@@ -113,7 +113,7 @@ public class FeishuIdentityProvider extends AbstractOAuth2IdentityProvider<Feish
     // Callback: custom Feishu token exchange
     //
     // Feishu uses a non-standard OAuth2 token exchange:
-    //   - Request: JSON POST body with app_id, app_secret, grant_type, code
+    //   - Request: JSON POST body with client_id, client_secret, grant_type, code
     //   - Response: {"code":0, "data": {"access_token":"...", ...}}
     //
     // We override the full callback to handle this custom flow.

@@ -71,6 +71,26 @@ public class FeishuIdentityProviderFactory
     public List<ProviderConfigProperty> getConfigProperties() {
         return ProviderConfigurationBuilder.create()
 
+                // ---- Credentials (standard Keycloak Client ID / Client Secret) ----
+
+                .property()
+                .name("clientId")
+                .label("Client ID")
+                .helpText("The Feishu application App ID (client_id). " +
+                        "Find this on the Feishu Open Platform console " +
+                        "(https://open.feishu.cn/app) under Credentials.")
+                .type(ProviderConfigProperty.STRING_TYPE)
+                .add()
+
+                .property()
+                .name("clientSecret")
+                .label("Client Secret")
+                .helpText("The Feishu application App Secret (client_secret). " +
+                        "Keep this value confidential.")
+                .type(ProviderConfigProperty.PASSWORD)
+                .secret(true)
+                .add()
+
                 // ---- Endpoint URLs ----
 
                 .property()
