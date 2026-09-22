@@ -125,7 +125,7 @@ and maps every field to a Keycloak user attribute.
 | `union_id`        | broker user ID (preferred) | `feishu_union_id`      | Cross-app user identifier (used as federated ID when available) |
 | `open_id`         | broker user ID (fallback) | `feishu_open_id`       | Stable user identifier (fallback when union_id is missing) |
 | `name`            | firstName, username     | `feishu_name`          | Chinese display name         |
-| `en_name`         | lastName                | `feishu_en_name`       | English name (or Chinese if same) |
+| `en_name`         | —                       | `feishu_en_name`       | English name; stored as attribute only, not mapped to lastName or any profile field |
 | `email`           | email (if non-blank)    | `feishu_email`         | May be `""` — skipped if empty |
 | `mobile`          | —                       | `feishu_mobile`        | Phone number                 |
 | `avatar_big`      | avatar (preferred)      | `feishu_avatar_big`    | 640×640                      |

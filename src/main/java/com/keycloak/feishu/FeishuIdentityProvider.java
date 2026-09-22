@@ -46,7 +46,6 @@ public class FeishuIdentityProvider extends AbstractOAuth2IdentityProvider<Feish
     // ---- Feishu user_info response fields ----
     private static final String FLD_SUB = "sub";
     private static final String FLD_NAME = "name";
-    private static final String FLD_EN_NAME = "en_name";
     private static final String FLD_NICKNAME = "nickname";
     private static final String FLD_EMAIL = "email";
     private static final String FLD_MOBILE = "mobile";
@@ -352,13 +351,14 @@ public class FeishuIdentityProvider extends AbstractOAuth2IdentityProvider<Feish
                 brokerUserId, getConfig());
 
         String name = getField(userInfo, FLD_NAME);
-        String enName = getField(userInfo, FLD_EN_NAME);
         String email = getField(userInfo, FLD_EMAIL);
 
         identity.setUsername(brokerUserId);
         identity.setFirstName(name);
-        // Use en_name as lastName if available; otherwise fall back to name
-        identity.setLastName(enName != null ? enName : name);
+        // Leave lastName empty. Feishu returns full names only — no separate
+        // first/last name fields — so setting it would either duplicate the
+        // display name or produce a meaningless split.
+        identity.setLastName(null);
 
         // Only set email if it's non-blank (Feishu may return "")
         if (email != null && !email.isBlank()) {
