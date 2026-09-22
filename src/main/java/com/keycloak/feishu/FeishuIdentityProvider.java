@@ -449,8 +449,11 @@ public class FeishuIdentityProvider extends AbstractOAuth2IdentityProvider<Feish
         logger.infof("Migrating federated identity link for user '%s': %s -> %s",
                 legacyUser.getUsername(), openId, unionId);
 
-        // Migrate: add a new link with union_id, then remove the old open_id link
+        // Add a new federated identity link keyed by union_id.
+        // The legacy open_id link is left in place – it becomes dormant but harmless.
+        // We deliberately do NOT call removeFederatedIdentity here because it
+        // removes by identity-provider alias, which would also delete the new
+        // union_id link we just added.
         session.users().addFederatedIdentity(realm, legacyUser, newLink);
-        session.users().removeFederatedIdentity(realm, legacyUser, idpAlias);
     }
 }
