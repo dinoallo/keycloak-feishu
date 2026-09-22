@@ -115,15 +115,15 @@ wrapped response:
 }
 ```
 
-The provider unwraps the `data` object, uses `open_id` as the federated user
-identifier, and maps every field to a Keycloak user attribute.
+The provider unwraps the `data` object, uses `union_id` as the federated user identifier (falls back to `open_id`, then `sub`),
+and maps every field to a Keycloak user attribute.
 
 ## Field Mapping
 
 | Feishu Field      | Keycloak Profile Field  | Keycloak Attribute     | Notes                        |
 |-------------------|-------------------------|------------------------|------------------------------|
-| `open_id`         | broker user ID          | `feishu_open_id`       | Stable user identifier       |
-| `union_id`        | —                       | `feishu_union_id`      | Cross-app user identifier    |
+| `union_id`        | broker user ID (preferred) | `feishu_union_id`      | Cross-app user identifier (used as federated ID when available) |
+| `open_id`         | broker user ID (fallback) | `feishu_open_id`       | Stable user identifier (fallback when union_id is missing) |
 | `name`            | firstName, username     | `feishu_name`          | Chinese display name         |
 | `en_name`         | lastName                | `feishu_en_name`       | English name (or Chinese if same) |
 | `email`           | email (if non-blank)    | `feishu_email`         | May be `""` — skipped if empty |
@@ -134,7 +134,7 @@ identifier, and maps every field to a Keycloak user attribute.
 | `avatar_url`      | avatar (last fallback)  | `feishu_avatar_url`    | 72×72                        |
 | `tenant_key`      | —                       | `feishu_tenant_key`    | Tenant identifier            |
 | `user_id`         | —                       | `feishu_user_id`       | Employee ID (requires extra scope) |
-| `sub`             | —                       | `feishu_sub`           | Subject (may not be present) |
+| `sub`             | broker user ID (last fallback) | `feishu_sub`      | Subject (last fallback when both union_id and open_id are missing) |
 | `nickname`        | —                       | `feishu_nickname`      | (usually not returned)       |
 
 **Avatar priority**: `avatar_big` → `avatar_middle` → `avatar_thumb` → `avatar_url`

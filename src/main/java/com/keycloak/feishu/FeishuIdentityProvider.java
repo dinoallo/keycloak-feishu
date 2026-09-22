@@ -16,8 +16,10 @@ import org.keycloak.broker.oidc.AbstractOAuth2IdentityProvider;
 import org.keycloak.broker.provider.util.SimpleHttp;
 import org.keycloak.broker.social.SocialIdentityProvider;
 import org.keycloak.events.EventBuilder;
+import org.keycloak.models.FederatedIdentityModel;
 import org.keycloak.models.KeycloakSession;
 import org.keycloak.models.RealmModel;
+import org.keycloak.models.UserModel;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -179,6 +181,10 @@ public class FeishuIdentityProvider extends AbstractOAuth2IdentityProvider<Feish
             identity.setToken(accessToken);
         }
 
+        // Backward compatibility: if the broker user ID changed from open_id to union_id,
+        // migrate any existing federated link keyed by the legacy open_id.
+        migrateFederatedIdentityLink(realm, identity);
+
         return callback.authenticated(identity);
     }
 
@@ -329,10 +335,10 @@ public class FeishuIdentityProvider extends AbstractOAuth2IdentityProvider<Feish
         String unionId = getField(userInfo, FLD_UNION_ID);
         String sub = getField(userInfo, FLD_SUB);
 
-        // Prefer open_id as the broker user ID; fall back to union_id or sub
-        String brokerUserId = openId;
+        // Prefer union_id as the broker user ID; fall back to open_id or sub
+        String brokerUserId = unionId;
         if (brokerUserId == null) {
-            brokerUserId = unionId;
+            brokerUserId = openId;
         }
         if (brokerUserId == null) {
             brokerUserId = sub;
@@ -396,5 +402,82 @@ public class FeishuIdentityProvider extends AbstractOAuth2IdentityProvider<Feish
             return null;
         }
         return value;
+    }
+
+    /**
+     * Migrate a legacy federated identity link keyed by {@code open_id} to the
+     * new {@code union_id} identifier.
+     *
+     * <p>Before the {@code union_id}-preferred change, the broker user ID was
+     * set to the Feishu {@code open_id}. Existing federated user records are
+     * therefore keyed by {@code open_id}.  On the first login after the upgrade
+     * this method detects that mismatch and silently migrates the stored link
+     * so that subsequent logins use {@code union_id} natively.</p>
+     */
+    private void migrateFederatedIdentityLink(RealmModel realm,
+                                               BrokeredIdentityContext identity) {
+        JsonNode userInfo = (JsonNode) identity.getContextData().get(PROP_FEISHU_USER_INFO);
+        if (userInfo == null) {
+            return;
+        }
+
+        String unionId = getField(userInfo, FLD_UNION_ID);
+        String openId = getField(userInfo, FLD_OPEN_ID);
+        if (unionId == null || openId == null || unionId.equals(openId)) {
+            // Nothing to migrate – either one is missing or they already match.
+            return;
+        }
+
+        String idpAlias = getConfig().getAlias();
+
+        // Check whether a link already exists for the new union_id
+        FederatedIdentityModel newLink = new FederatedIdentityModel(idpAlias, unionId, null);
+        UserModel existingUser = session.users().getUserByFederatedIdentity(realm, newLink);
+        if (existingUser != null) {
+            // Already migrated by a previous login.
+            return;
+        }
+
+        // Look for a legacy link keyed by open_id
+        FederatedIdentityModel legacyLink = new FederatedIdentityModel(idpAlias, openId, null);
+        UserModel legacyUser = session.users().getUserByFederatedIdentity(realm, legacyLink);
+        if (legacyUser == null) {
+            // No legacy link found – nothing to migrate.
+            return;
+        }
+
+        logger.infof("Migrating federated identity link for user '%s': %s -> %s",
+                legacyUser.getUsername(), openId, unionId);
+
+        // Retrieve the existing federated identity to preserve the stored token
+        FederatedIdentityModel existingFid = session.users()
+                .getFederatedIdentity(realm, legacyUser, idpAlias);
+
+        // Remove the legacy open_id link (idempotent), then add a new link with
+        // union_id.  The order matters: remove first to free the unique constraint
+        // on (user_id, identity_provider).
+        session.users().removeFederatedIdentity(realm, legacyUser, idpAlias);
+        try {
+            session.users().addFederatedIdentity(realm, legacyUser,
+                    new FederatedIdentityModel(idpAlias, unionId,
+                            existingFid != null ? existingFid.getUserName() : identity.getUsername(),
+                            existingFid != null ? existingFid.getToken() : identity.getToken()));
+        } catch (Exception e) {
+            // Check whether the failure was caused by a concurrent callback that
+            // already added the union_id link before us.
+            UserModel userByUnionId = session.users()
+                    .getUserByFederatedIdentity(realm, newLink);
+            if (userByUnionId != null) {
+                // Concurrent migration completed — the old link is already removed.
+                logger.debugf("Migration already completed by concurrent request " +
+                        "for user '%s'", legacyUser.getUsername());
+            } else {
+                // Non-concurrency failure (e.g. transient DB error).  We have already
+                // removed the legacy open_id link, so the user would be left without
+                // any federated identity.  Propagate the exception to fail the login
+                // safely rather than silently dropping the link.
+                throw e;
+            }
+        }
     }
 }
