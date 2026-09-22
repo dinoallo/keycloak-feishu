@@ -115,15 +115,15 @@ wrapped response:
 }
 ```
 
-The provider unwraps the `data` object, uses `open_id` as the federated user
-identifier, and maps every field to a Keycloak user attribute.
+The provider unwraps the `data` object, uses `union_id` as the federated user identifier (falls back to `open_id`),
+and maps every field to a Keycloak user attribute.
 
 ## Field Mapping
 
 | Feishu Field      | Keycloak Profile Field  | Keycloak Attribute     | Notes                        |
 |-------------------|-------------------------|------------------------|------------------------------|
-| `open_id`         | broker user ID          | `feishu_open_id`       | Stable user identifier       |
-| `union_id`        | —                       | `feishu_union_id`      | Cross-app user identifier    |
+| `union_id`        | broker user ID (preferred) | `feishu_union_id`      | Cross-app user identifier (used as federated ID when available) |
+| `open_id`         | broker user ID (fallback) | `feishu_open_id`       | Stable user identifier (fallback when union_id is missing) |
 | `name`            | firstName, username     | `feishu_name`          | Chinese display name         |
 | `en_name`         | lastName                | `feishu_en_name`       | English name (or Chinese if same) |
 | `email`           | email (if non-blank)    | `feishu_email`         | May be `""` — skipped if empty |

@@ -329,10 +329,10 @@ public class FeishuIdentityProvider extends AbstractOAuth2IdentityProvider<Feish
         String unionId = getField(userInfo, FLD_UNION_ID);
         String sub = getField(userInfo, FLD_SUB);
 
-        // Prefer open_id as the broker user ID; fall back to union_id or sub
-        String brokerUserId = openId;
+        // Prefer union_id as the broker user ID; fall back to open_id or sub
+        String brokerUserId = unionId;
         if (brokerUserId == null) {
-            brokerUserId = unionId;
+            brokerUserId = openId;
         }
         if (brokerUserId == null) {
             brokerUserId = sub;
