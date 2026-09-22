@@ -449,11 +449,18 @@ public class FeishuIdentityProvider extends AbstractOAuth2IdentityProvider<Feish
         logger.infof("Migrating federated identity link for user '%s': %s -> %s",
                 legacyUser.getUsername(), openId, unionId);
 
-        // Add a new federated identity link keyed by union_id.
-        // The legacy open_id link is left in place – it becomes dormant but harmless.
-        // We deliberately do NOT call removeFederatedIdentity here because it
-        // removes by identity-provider alias, which would also delete the new
-        // union_id link we just added.
-        session.users().addFederatedIdentity(realm, legacyUser, newLink);
+        // Retrieve the existing federated identity to preserve the stored token
+        FederatedIdentityModel existingFid = session.users()
+                .getFederatedIdentity(realm, legacyUser, idpAlias);
+
+        // Remove the legacy open_id link, then add a new link with union_id.
+        // The order matters: remove first (there is only one link at this point
+        // for this user+provider), then add the new one — Keycloak storage has
+        // a unique constraint on (user_id, identity_provider).
+        session.users().removeFederatedIdentity(realm, legacyUser, idpAlias);
+        session.users().addFederatedIdentity(realm, legacyUser,
+                new FederatedIdentityModel(idpAlias, unionId,
+                        existingFid != null ? existingFid.getUserName() : identity.getUsername(),
+                        existingFid != null ? existingFid.getToken() : identity.getToken()));
     }
 }
