@@ -351,10 +351,12 @@ public class FeishuIdentityProvider extends AbstractOAuth2IdentityProvider<Feish
 
         identity.setUsername(brokerUserId);
         identity.setFirstName(name);
-        // Use en_name as lastName only when it provides meaningful distinction.
-        // When en_name is absent or identical to name, use name to satisfy
-        // Keycloak's required lastName field in the default profile.
-        identity.setLastName(enName != null && !enName.equals(name) ? enName : name);
+        // Use en_name as lastName when available; otherwise fall back to name.
+        // Feishu returns full names only — no separate first/last name fields — so
+        // when en_name is absent or identical to name, lastName equals firstName
+        // which causes cosmetic duplication in Keycloak UIs. Realm admins can make
+        // lastName optional in the user profile to avoid this.
+        identity.setLastName(enName != null ? enName : name);
 
         // Only set email if it's non-blank (Feishu may return "")
         if (email != null && !email.isBlank()) {
