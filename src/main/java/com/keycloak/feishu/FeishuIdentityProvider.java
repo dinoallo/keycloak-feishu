@@ -463,10 +463,21 @@ public class FeishuIdentityProvider extends AbstractOAuth2IdentityProvider<Feish
                             existingFid != null ? existingFid.getUserName() : identity.getUsername(),
                             existingFid != null ? existingFid.getToken() : identity.getToken()));
         } catch (Exception e) {
-            // Another concurrent callback already added the union_id link.
-            // The migration is complete; the old open_id link is already gone.
-            logger.debugf("Federated identity migration already completed by " +
-                    "concurrent request for user '%s'", legacyUser.getUsername());
+            // Check whether the failure was caused by a concurrent callback that
+            // already added the union_id link before us.
+            UserModel userByUnionId = session.users()
+                    .getUserByFederatedIdentity(realm, newLink);
+            if (userByUnionId != null) {
+                // Concurrent migration completed — the old link is already removed.
+                logger.debugf("Migration already completed by concurrent request " +
+                        "for user '%s'", legacyUser.getUsername());
+            } else {
+                // Non-concurrency failure (e.g. transient DB error).  We have already
+                // removed the legacy open_id link, so the user would be left without
+                // any federated identity.  Propagate the exception to fail the login
+                // safely rather than silently dropping the link.
+                throw e;
+            }
         }
     }
 }
