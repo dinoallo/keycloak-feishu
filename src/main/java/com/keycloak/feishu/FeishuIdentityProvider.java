@@ -453,14 +453,20 @@ public class FeishuIdentityProvider extends AbstractOAuth2IdentityProvider<Feish
         FederatedIdentityModel existingFid = session.users()
                 .getFederatedIdentity(realm, legacyUser, idpAlias);
 
-        // Remove the legacy open_id link, then add a new link with union_id.
-        // The order matters: remove first (there is only one link at this point
-        // for this user+provider), then add the new one — Keycloak storage has
-        // a unique constraint on (user_id, identity_provider).
+        // Remove the legacy open_id link (idempotent), then add a new link with
+        // union_id.  The order matters: remove first to free the unique constraint
+        // on (user_id, identity_provider).
         session.users().removeFederatedIdentity(realm, legacyUser, idpAlias);
-        session.users().addFederatedIdentity(realm, legacyUser,
-                new FederatedIdentityModel(idpAlias, unionId,
-                        existingFid != null ? existingFid.getUserName() : identity.getUsername(),
-                        existingFid != null ? existingFid.getToken() : identity.getToken()));
+        try {
+            session.users().addFederatedIdentity(realm, legacyUser,
+                    new FederatedIdentityModel(idpAlias, unionId,
+                            existingFid != null ? existingFid.getUserName() : identity.getUsername(),
+                            existingFid != null ? existingFid.getToken() : identity.getToken()));
+        } catch (Exception e) {
+            // Another concurrent callback already added the union_id link.
+            // The migration is complete; the old open_id link is already gone.
+            logger.debugf("Federated identity migration already completed by " +
+                    "concurrent request for user '%s'", legacyUser.getUsername());
+        }
     }
 }
