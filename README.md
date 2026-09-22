@@ -115,7 +115,7 @@ wrapped response:
 }
 ```
 
-The provider unwraps the `data` object, uses `union_id` as the federated user identifier (falls back to `open_id`),
+The provider unwraps the `data` object, uses `union_id` as the federated user identifier (falls back to `open_id`, then `sub`),
 and maps every field to a Keycloak user attribute.
 
 ## Field Mapping
@@ -134,7 +134,7 @@ and maps every field to a Keycloak user attribute.
 | `avatar_url`      | avatar (last fallback)  | `feishu_avatar_url`    | 72×72                        |
 | `tenant_key`      | —                       | `feishu_tenant_key`    | Tenant identifier            |
 | `user_id`         | —                       | `feishu_user_id`       | Employee ID (requires extra scope) |
-| `sub`             | —                       | `feishu_sub`           | Subject (may not be present) |
+| `sub`             | broker user ID (last fallback) | `feishu_sub`      | Subject (last fallback when both union_id and open_id are missing) |
 | `nickname`        | —                       | `feishu_nickname`      | (usually not returned)       |
 
 **Avatar priority**: `avatar_big` → `avatar_middle` → `avatar_thumb` → `avatar_url`
